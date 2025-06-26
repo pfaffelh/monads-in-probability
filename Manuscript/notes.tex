@@ -1,0 +1,94 @@
+% please run using
+% lualatex --shell-escape ...tex
+
+\documentclass{article}
+\usepackage{latexsym, a4wide}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage{color}
+\usepackage{amsfonts,amssymb,mathtools,amsthm,mathrsfs,bbm}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{lemma}[proposition]{Lemma}
+\newtheorem{corollary}[proposition]{Corollary}
+\newtheorem{definition}[proposition]{Definition}
+\theoremstyle{definition}
+\newtheorem{remark}[proposition]{Remark}
+\newtheorem{example}[proposition]{Example}
+\newtheoremstyle{step}{3pt}{0pt}{}{}{\bf}{}{.5em}{}
+\theoremstyle{step} \newtheorem{step}{Step}
+
+\DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
+\newcommand{\smallu}{\mathpzc{u}}
+
+\usepackage{minted}
+\setminted{encoding=utf-8}
+\usepackage{fontspec}
+%\setmainfont{dejavu-serif}
+\setmonofont[Scale=0.85]{dejavu-sans}
+%\setmainfont{FreeSerif}
+%\setmonofont{FreeMono}
+\usepackage{xcolor, graphics}
+\definecolor{mygray}{rgb}{0.97,0.97,0.97}
+\definecolor{LightCyan}{rgb}{0.8784,1,1}
+\newcommand{\leanline}[1]{\mintinline[breaklines, breakafter=_., breaklines]{Lean}{#1}}%\textsuperscript{\textcolor{gray}{\tiny(m)}}}
+\newcommand{\leanlinecolor}{\mintinline[breaklines, breakafter=_., breaklines, bgcolor=LightCyan]{Lean}}
+%\usepackage{refcheck}
+
+\usepackage[notcite,notref]{showkeys}
+\usepackage{hyperref}
+
+\usepackage{natbib}
+
+\begin{document}
+\title{\LARGE Probability Monads in Lean4}
+
+
+\maketitle 
+
+Monads are abundant in functional programming. In particular, they allow for a general theory which leads to efficient code. In this note, we shed some light on probability monads in Lean4 (and Mathlib4), and show some of this efficient code. Above all, we stress that usage of the probability (or Giri) monad (see \citealp{giry2006categorical}) and the resulting \leanline{do}-notation leads to code which reads like carrying out probabilistic experiments. 
+
+\section{Introduction}
+We will restrict ourselves to probabilistic mass functions, or discrete probability measure, wich -- for some \leanline{α : Type} is a function \leanline{α → ℝ≥0∞} -- which sums to one:
+
+\begin{minted}[highlightlines={}, mathescape, numbersep=5pt, framesep=5mm, bgcolor=mygray]{Lean}
+def PMF.{u} (α : Type u) : Type u :=
+  { f : α → ℝ≥0∞ // HasSum f 1 }
+\end{minted}
+
+This means that we do not talk about general measures, where measurability issues may arise, and the $\sigma$-algebras on \leanline{α} is always the power set. 
+
+A monad is based on an Applicative:
+
+\begin{minted}[highlightlines={}, mathescape, numbersep=5pt, framesep=5mm, bgcolor=mygray]{Lean}
+class Monad (m : Type u → Type v) extends Applicative m, Bind m : Type (max (u+1) v) where
+  map      f x := bind x (Function.comp pure f)
+  seq      f x := bind f fun y => Functor.map y (x ())
+  seqLeft  x y := bind x fun a => bind (y ()) (fun _ => pure a)
+  seqRight x y := bind x fun _ => y ()
+\end{minted}
+
+
+\begin{minted}[highlightlines={}, mathescape, numbersep=5pt, framesep=5mm, bgcolor=mygray]{Lean}
+class Applicative (f : Type u → Type v) extends Functor f, Pure f, Seq f, SeqLeft f, SeqRight f where
+  map      := fun x y => Seq.seq (pure x) fun _ => y
+  seqLeft  := fun a b => Seq.seq (Functor.map (Function.const _) a) b
+  seqRight := fun a b => Seq.seq (Functor.map (Function.const _ id) a) b
+\end{minted}
+
+Lean has the notation \leanline{ma >>= f := bind  ma f} and \leanline{ma >> mb := bind ma (fun _ => mb)}
+
+\leanline{do a ← ma, t :=  ma >>= (fun a => t) := bind ma (fun a => t)}
+
+
+
+\url{https://en.wikipedia.org/wiki/Giry_monad}
+
+\cite{giry2006categorical}
+
+\bibliographystyle{alpha}
+\bibliography{main}
+
+
+\end{document}

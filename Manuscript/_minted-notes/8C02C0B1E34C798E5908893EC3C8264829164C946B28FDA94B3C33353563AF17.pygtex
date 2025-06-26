@@ -1,0 +1,6 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{k+kd}{class} \PYG{n}{Applicative} \PYG{o}{(}\PYG{n}{f} \PYG{o}{:} \PYG{k+kt}{Type} \PYG{n}{u} \PYG{n+nb+bp}{→} \PYG{k+kt}{Type} \PYG{n}{v}\PYG{o}{)} \PYG{k+kd}{extends} \PYG{n}{Functor} \PYG{n}{f}\PYG{o}{,} \PYG{n}{Pure} \PYG{n}{f}\PYG{o}{,} \PYG{n}{Seq} \PYG{n}{f}\PYG{o}{,} \PYG{n}{SeqLeft} \PYG{n}{f}\PYG{o}{,} \PYG{n}{SeqRight} \PYG{n}{f} \PYG{n}{where}
+  \PYG{n}{map}      \PYG{o}{:=} \PYG{k}{fun} \PYG{n}{x} \PYG{n}{y} \PYG{n+nb+bp}{=\PYGZgt{}} \PYG{n}{Seq.seq} \PYG{o}{(}\PYG{n}{pure} \PYG{n}{x}\PYG{o}{)} \PYG{k}{fun} \PYG{n}{\PYGZus{}} \PYG{n+nb+bp}{=\PYGZgt{}} \PYG{n}{y}
+  \PYG{n}{seqLeft}  \PYG{o}{:=} \PYG{k}{fun} \PYG{n}{a} \PYG{n}{b} \PYG{n+nb+bp}{=\PYGZgt{}} \PYG{n}{Seq.seq} \PYG{o}{(}\PYG{n}{Functor.map} \PYG{o}{(}\PYG{n}{Function.const} \PYG{n}{\PYGZus{}}\PYG{o}{)} \PYG{n}{a}\PYG{o}{)} \PYG{n}{b}
+  \PYG{n}{seqRight} \PYG{o}{:=} \PYG{k}{fun} \PYG{n}{a} \PYG{n}{b} \PYG{n+nb+bp}{=\PYGZgt{}} \PYG{n}{Seq.seq} \PYG{o}{(}\PYG{n}{Functor.map} \PYG{o}{(}\PYG{n}{Function.const} \PYG{n}{\PYGZus{}} \PYG{n}{id}\PYG{o}{)} \PYG{n}{a}\PYG{o}{)} \PYG{n}{b}
+\end{Verbatim}

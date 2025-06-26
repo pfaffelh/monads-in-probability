@@ -1,0 +1,4 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{n+nb+bp}{*} \PYG{n+nb+bp}{`}\PYG{n}{pure} \PYG{o}{:} \PYG{n}{α} \PYG{n+nb+bp}{→} \PYG{n}{F} \PYG{n}{α}\PYG{n+nb+bp}{`}
+\PYG{n+nb+bp}{*} \PYG{n+nb+bp}{`}\PYG{n}{bind} \PYG{o}{:} \PYG{n}{F} \PYG{n}{α} \PYG{n+nb+bp}{→} \PYG{o}{(}\PYG{n}{α} \PYG{n+nb+bp}{→} \PYG{n}{F} \PYG{n}{β}\PYG{o}{)} \PYG{n+nb+bp}{→} \PYG{n}{F} \PYG{n}{β}\PYG{n+nb+bp}{`} \PYG{o}{(}\PYG{n}{written} \PYG{n}{as} \PYG{n+nb+bp}{`\PYGZgt{}\PYGZgt{}=`}\PYG{o}{)}
+\end{Verbatim}

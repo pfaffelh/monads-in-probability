@@ -1,0 +1,7 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{k+kd}{class} \PYG{n}{Monad} \PYG{o}{(}\PYG{n}{m} \PYG{o}{:} \PYG{k+kt}{Type} \PYG{n}{u} \PYG{n+nb+bp}{→} \PYG{k+kt}{Type} \PYG{n}{v}\PYG{o}{)} \PYG{k+kd}{extends} \PYG{n}{Applicative} \PYG{n}{m}\PYG{o}{,} \PYG{n}{Bind} \PYG{n}{m} \PYG{o}{:} \PYG{k+kt}{Type} \PYG{o}{(}\PYG{n}{max} \PYG{o}{(}\PYG{n}{u}\PYG{n+nb+bp}{+}\PYG{l+m+mi}{1}\PYG{o}{)} \PYG{n}{v}\PYG{o}{)} \PYG{n}{where}
+  \PYG{n}{map}      \PYG{n}{f} \PYG{n}{x} \PYG{o}{:=} \PYG{n}{bind} \PYG{n}{x} \PYG{o}{(}\PYG{n}{Function.comp} \PYG{n}{pure} \PYG{n}{f}\PYG{o}{)}
+  \PYG{n}{seq}      \PYG{n}{f} \PYG{n}{x} \PYG{o}{:=} \PYG{n}{bind} \PYG{n}{f} \PYG{k}{fun} \PYG{n}{y} \PYG{n+nb+bp}{=\PYGZgt{}} \PYG{n}{Functor.map} \PYG{n}{y} \PYG{o}{(}\PYG{n}{x} \PYG{o}{())}
+  \PYG{n}{seqLeft}  \PYG{n}{x} \PYG{n}{y} \PYG{o}{:=} \PYG{n}{bind} \PYG{n}{x} \PYG{k}{fun} \PYG{n}{a} \PYG{n+nb+bp}{=\PYGZgt{}} \PYG{n}{bind} \PYG{o}{(}\PYG{n}{y} \PYG{o}{())} \PYG{o}{(}\PYG{k}{fun} \PYG{n}{\PYGZus{}} \PYG{n+nb+bp}{=\PYGZgt{}} \PYG{n}{pure} \PYG{n}{a}\PYG{o}{)}
+  \PYG{n}{seqRight} \PYG{n}{x} \PYG{n}{y} \PYG{o}{:=} \PYG{n}{bind} \PYG{n}{x} \PYG{k}{fun} \PYG{n}{\PYGZus{}} \PYG{n+nb+bp}{=\PYGZgt{}} \PYG{n}{y} \PYG{o}{()}
+\end{Verbatim}
