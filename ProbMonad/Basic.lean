@@ -13,8 +13,26 @@ noncomputable def B (n : ℕ) (p : ℝ≥0∞) (hp : p ≤ 1):= PMF.binomial p h
 
 -- Now we can write `B n p hp` for the usual binomial distribution.
 
+open PMF
 
 
+
+theorem binomial_recurrence (p : ℝ≥0∞) (h : p ≤ 1) (m : ℕ) (x : Fin (m+1)) (hx : 0 < x):
+  (binomial p h (m+1)) (Fin.castSucc x) =
+    (1 - p) * (PMF.map Fin.castSucc (binomial p h m)) (Fin.castSucc x) +
+    p * (PMF.map Fin.castSucc (binomial p h m)) (Fin.castSucc (x - 1)) := by
+    let p' := p.toReal
+    simp [binomial_apply]
+    rw [Nat.choose_succ_left _ _ hx]
+    have h' : p ^ x.val * p * 2 = 0 := by sorry
+    have h1 : ∑' (a : Fin (m + 1)), (if x = a then p ^ (a.val) * (1 - p) ^ (m - a.val) * ((m.choose a.val)) else 0) = (p ^ x.val * (1 - p) ^ (m - x.val) * (m.choose x.val)) := by
+      sorry
+
+    norm_cast at h1
+
+    have h2 : ∑' (a : Fin (m + 1)), (if x - 1 = a then p ^ a.val * (1 - p) ^ (m - a.val) * (m.choose a.val) else 0) = p ^ (x - 1).val * (1 - p) ^ (m - (x.val - 1)) * (m.choose (x.val - 1)) := by sorry
+    rw [h1, h2]
+    sorry
 
 
 
@@ -31,7 +49,7 @@ example (m : Type u → Type v) {α : Type u} [Monad m] [LawfulMonad m] (x : m �
 example (m : Type u → Type v) {α : Type u} [Monad m] [LawfulMonad m] (x : m α) : x >>= pure = x
   := by exact (bind_pure x)
 
-#check bind_pure (PMF.bernoulli _ _)
+#check PMF.bind_pure (PMF.bernoulli _ _)
 
 variable {α β : Type u}
 
@@ -41,9 +59,8 @@ section some_notation
 
 notation "δ" => PMF.pure -- for the Dirac measure
 
-example (a : α) : δ a = do return ← pure a := by
-  simp only [bind_pure]
-  rfl
+example (a : α) : δ a = do return ← PMF.pure a := by
+  exact Eq.symm (_root_.bind_pure (δ a))
 
 -- map
 
@@ -71,10 +88,6 @@ variable (f : α → β) (x : α)
 
 example : f ₓ (δ x) = δ (f x) := by
   exact PMF.pure_map f x
-
-@[simp] theorem LawfulMonad.map_pure' [Monad m] [LawfulMonad m] {a : α} :
-    (f <$> pure a : m β) = pure (f a) := by
-  simp only [map_pure]
 
 
 
@@ -152,7 +165,33 @@ noncomputable def binom' (p : ℝ≥0∞) (h : p ≤ 1) : (n : ℕ) → PMF (Fin
   | n+1 => do
     let Head ← coin p h
     let X ← binom p h n
-    return Head.toNat + X
+    return (Head : Fin 2) + X
+
+example (n m : ℕ) (k : Fin n) (l : Fin m) : (k + l).val = k.val + l.val := by
+  sorry
+
+
+def boolList (n : Nat) : List Bool :=
+  let mut acc := []
+  for i in [0:n] do
+    acc := acc ++ [i % 2 == 0]
+  acc
+
+
+noncomputable def binom₀ (p : ENNReal) (h : p ≤ 1) (n : ℕ) : PMF ℕ := do
+  let choices ← sequence <| List.replicate n (PMF.bernoulli p h)
+  return choices.count true
+
+
+def boolListM (n : Nat) : (List (PMF Bool)) := do
+  List.range n >>= (fun i => coin p h)
+
+noncomputable def binom_with_for (n : ℕ) : PMF (Fin (n + 1)) := do
+  let mut X ← List.replicate n (coin p h)
+  for i in [1:n] do
+    let (X i) ← coin p h
+    return X
+  return result
 
 noncomputable def binom'' (n : ℕ) : PMF ℕ := do
   let mut result := 0
