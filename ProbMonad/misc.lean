@@ -1,88 +1,85 @@
 import Mathlib
 
-open ENNReal
 
-def coin (p : ℝ≥0∞) (hp : p ≤ 1) : PMF Bool := PMF.bernoulli p hp
+structure MyMonad (α : Type u) : Type (u+1) where
+  run : α → Bool  -- Dummy example
 
-example (p : ℝ≥0∞) (h : p ≤ 1) : coin p h = do let X ← coin p h; return X := by
-  simp only [bind_pure]
+def MyBind' {α β : Type u} (ma : MyMonad α) (f : α → MyMonad β) : MyMonad β :=
+  sorry  -- Your implementation here
 
-section binomial
+class MyBind (M : Type u → Type v) where
+  bind : ∀ {α β}, M α → (α → M β) → M β
 
-noncomputable def B (n : ℕ) (p : ℝ≥0∞) (hp : p ≤ 1):= PMF.binomial p hp n
-
--- Now we can write `B n p hp` for the usual binomial distribution.
-
-open PMF
+infixl:55 " >>>= " => MyBind.bind
 
 
+open Lean Elab Macro Term
 
-theorem binomial_recurrence (p : ℝ≥0∞) (h : p ≤ 1) (m : ℕ) (x : Fin (m+1)) (hx : 0 < x):
-  (binomial p h (m+1)) (Fin.castSucc x) =
-    (1 - p) * (PMF.map Fin.castSucc (binomial p h m)) (Fin.castSucc x) +
-    p * (PMF.map Fin.castSucc (binomial p h m)) (Fin.castSucc (x - 1)) := by
-    let p' := p.toReal
-    simp [binomial_apply]
-    rw [Nat.choose_succ_left _ _ hx]
-    have h' : p ^ x.val * p * 2 = 0 := by sorry
-    have h1 : ∑' (a : Fin (m + 1)), (if x = a then p ^ (a.val) * (1 - p) ^ (m - a.val) * ((m.choose a.val)) else 0) = (p ^ x.val * (1 - p) ^ (m - x.val) * (m.choose x.val)) := by
-      sorry
+syntax (name := mydo) "mydo " doSeq : term
 
-    norm_cast at h1
+-- Recursive macro
+macro_rules
+  -- Case: x ← a; rest
+  | `(mydo ($x:ident ← $a:term); $rest:doSeq) =>
+    `(bind $a (fun $x => mydo $rest))
 
-    have h2 : ∑' (a : Fin (m + 1)), (if x - 1 = a then p ^ a.val * (1 - p) ^ (m - a.val) * (m.choose a.val) else 0) = p ^ (x - 1).val * (1 - p) ^ (m - (x.val - 1)) * (m.choose (x.val - 1)) := by sorry
-    rw [h1, h2]
-    sorry
+  -- Case: final expression
+  | `(mydo $e:term) => `($e)
 
 
+open Lean Elab Macro Term Meta
 
-universe u v w
+-- Step 1: Define the syntax
+syntax (name := mydo) "mydo " doSeq : term
+
+-- Step 2: Macro rules for desugaring
+macro_rules
+  -- match: x ← a; ... (recursively transform the rest)
+  | `(mydo ($x:ident ← $a:term; $rest:doSeq)) =>
+    `(bind $a (fun $x => mydo $rest))
+
+  -- match: pure expression as final statement
+  | `(mydo $e:term) => `($e)
+
+
+open Lean Elab Term Meta
+
+syntax (name := mydo) "mydo " doSeq : term
+syntax (name := mydoLet) ident " ← " term : doElem
+syntax (name := mydoRet) term : doElem
+
+macro_rules
+  | `(mydo $x:ident ← $a:term; $rest) =>
+    `(bind $a (fun $x => mydo $rest))
+
+  | `(mydo $e:term) => `($e)
+
+
+
+macro_rules
+  | `(mydo $x:doSeq) => expandMyDo x
+
+macro_rules
+  | `(doElem| $x:ident ← $e:term) => `(bind $e (fun $x => _))
+  | `(doElem| $e:term)            => `($e)
+
+
+
+
+lemma map_const (ℙ : PMF α) (b : β) : (Function.const _ b) ₓ ℙ = δ b := by
+  have h : (Function.const α b) = (Function.const α b) ∘ id := by sorry
+  rw [h, ← map_map, bind_const]
+
+
+  exact PMF.map_const ℙ b
 
 
 
 
 
+example (ℙ : PMF α): Function.const _ ℙ <$> ℙ = PMF.map ∘ (fun ℙ ↦ ℙ)
 
-example (m : Type u → Type v) {α : Type u} [Monad m] [LawfulMonad m] (x : m α) : (do return ← x) = x
-  := by exact (bind_pure x)
 
-example (m : Type u → Type v) {α : Type u} [Monad m] [LawfulMonad m] (x : m α) : x >>= pure = x
-  := by exact (bind_pure x)
-
-#check PMF.bind_pure (PMF.bernoulli _ _)
-
-variable {α β : Type u}
-
-section some_notation
-
--- Dirac measure
-
-notation "δ" => PMF.pure -- for the Dirac measure
-
-example (a : α) : δ a = do return ← PMF.pure a := by
-  exact Eq.symm (_root_.bind_pure (δ a))
-
--- map
-
-infixl:100 "ₓ" => PMF.map
-
--- Now we can write `f ₓ ℙ` for the image PMF of `ℙ` under `f`.
--- This is usually denoted `PMF.map f ℙ` or `f <$> ℙ`.
-
-example (ℙ : PMF α) (f : α → β) : f ₓ ℙ = PMF.map f ℙ := rfl
-
-example (ℙ : PMF α) (f : α → β) : f ₓ ℙ = f <$> ℙ := rfl
-
--- bind
-
-infixl:100 "∘" => PMF.bind
-
--- Now we can write `ℙ ₓ κ` for the image PMF of `ℙ` under a kernel `κ`.
--- This is usually denoted `PMF.bind ℙ κ` or `ℙ >>= κ`.
-
-example (ℙ : PMF α) (κ : α → PMF β) : ℙ ∘ κ = ℙ.bind κ := by rfl
-
-example (ℙ : PMF α) (κ : α → PMF β) : ℙ >>= κ = ℙ.bind κ := by rfl
 
 variable (f : α → β) (x : α)
 
@@ -216,7 +213,7 @@ example (n : ℕ) : binom' p h n= PMF.binomial p h n := by
 
 
 
-example (α : Type) [MeasurableSpace α] [h : MeasurableSingletonClass α] (x : α) (f : α → ℝ) : ∫ a, f a ∂ (PMF.pure x).toMeasure = f x := by
+example (α : Type) [MeasurableSpace α] [h : MeasurableSingletonClass α] (x : α) (f : α → ℝ) :∫ a, f a ∂ (PMF.pure x).toMeasure = f x := by
   rw [PMF.toMeasure_pure]
   simp only [MeasureTheory.integral_dirac]
 
@@ -227,7 +224,6 @@ example (p : ℝ≥0∞) (h : p ≤ 1) (n : ℕ) : ∫ a, id (a : ℝ) ∂ (bino
     simp_rw [PMF.toMeasure_pure]
     simp only [MeasureTheory.integral_dirac, CharP.cast_eq_zero]
   · simp only [binom, LawfulMonad.bind_pure_comp, id_eq, Nat.cast_add, Nat.cast_one] at *
-
 
 --    rw [integral_eq_tsum _ _ _ ] at * -- , PMFmapmap_eq_map]
     sorry
