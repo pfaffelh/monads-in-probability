@@ -2,6 +2,8 @@ import Mathlib
 
 open ENNReal
 
+open scoped Monad
+
 universe u v
 variable {α β : Type u}
 variable {γ : Type v}
@@ -10,13 +12,13 @@ section some_notation
 
 -- `PMF.pure`: Dirac measure
 
-notation "δ" => PMF.pure -- for the Dirac measure
+noncomputable abbrev δ : α → PMF α := PMF.pure -- for the Dirac measure
 
 @[simp]
-lemma do_delta (a : α) : (do return ← PMF.pure a) = δ a := PMF.bind_pure (δ a)
+lemma do_delta (a : α) : (do let X ← PMF.pure a; return X) = δ a := bind_pure (δ a)
 
 @[simp]
-lemma do_bind_delta (a : α) : (do let X ← PMF.pure a; return X) = δ a := PMF.bind_pure (δ a)
+lemma do_bind_delta (a : α) : (do let X ← PMF.pure a; PMF.pure X) = δ a := bind_pure (δ a)
 
 -- map
 
@@ -26,12 +28,17 @@ infixl:100 "ₓ" => PMF.map
 -- This is usually denoted `PMF.map f ℙ` or `f <$> ℙ`.
 
 @[simp]
-lemma map_def (ℙ : PMF α) (f : α → β) : PMF.map f ℙ  = f ₓ ℙ := rfl
+lemma map_def (ℙ : PMF α) (f : α → β) : PMF.map f ℙ = f ₓ ℙ := rfl
+
+lemma map_pure (f : α → β) (a : α) : f <$> (δ a) = δ (f a) := by
+  exact PMF.pure_map f a
 
 -- The next two lemmas require that `α` and `β` live in the same universe!
 @[simp]
 lemma do_map (ℙ : PMF α) (f : α → β) :
-  (do let X ← ℙ; return f X) = f ₓ ℙ := rfl
+  (do let X ← ℙ; PMF.pure (f X)) = f ₓ ℙ := rfl
+
+lemma PMF.pure_eq_pure (a : α) : PMF.pure a = (pure a : PMF α) := by rfl
 
 /-
 noncomputable def PMF.prod {n : ℕ} (ℙ : Fin n → PMF α) : PMF (Fin n → α) :=(do let X ← sequence (f := PMF) ℙ; return X)
@@ -55,7 +62,7 @@ lemma do_map₂ (ℙ ℙ' : PMF α) (f : α → α → β) :
 -/
 
 @[simp]
-lemma map_def' (ℙ : PMF α) (f : α → β) : f ₓ ℙ = f <$> ℙ := rfl
+lemma map_def' (ℙ : PMF α) (f : α → β) : f <$> ℙ = f ₓ ℙ := rfl
 
 -- bind
 

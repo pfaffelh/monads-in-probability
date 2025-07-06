@@ -238,3 +238,6 @@ noncomputable def Mpure (α : MeasCat) (P : MeasureTheory.Measure α) : (Measure
     let X ← P
     return X
 -/
+lemma l1 : (p : ℝ≥0∞) ≤ 1 ↔ p ≤ 1 := by exact coe_le_one_iff
+
+def coin : PMF Bool := PMF.bernoulli (p : ℝ≥0∞) ((l1 p).mpr h)
