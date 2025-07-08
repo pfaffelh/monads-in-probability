@@ -78,7 +78,7 @@ variable (p₁ p₂ : ℝ≥0∞) (hp₁ : p₁ ≤ 1) (hp₂ : p₂ ≤ 1)
 example : p₁ ≠ ⊤ := by
   apply (lt_of_le_of_lt hp₁ one_lt_top).ne
 
-lemma two_coins : ((coin p₁ hp₁) >>= (fun (X : Bool) ↦ X.and <$> coin p₂ hp₂)) = coin (p₁ * p₂) (Left.mul_le_one hp₁ hp₂) := by
+lemma two_coins_and : ((coin p₁ hp₁) >>= (fun (X : Bool) ↦ X.and <$> coin p₂ hp₂)) = coin (p₁ * p₂) (Left.mul_le_one hp₁ hp₂) := by
   simp only [map_def', do_bind]
   ext x
   simp [coin, tsum_bool]
@@ -90,14 +90,23 @@ lemma two_coins : ((coin p₁ hp₁) >>= (fun (X : Bool) ↦ X.and <$> coin p₂
     · exact (lt_of_le_of_lt hp₁ one_lt_top).ne
   · simp only [Bool.true_eq_false, ↓reduceIte, add_zero, mul_zero, zero_add, cond_true]
 
-lemma two_coins' :
+lemma two_coins_and' :
   (do
     let X ← coin p₁ hp₁;
     let Y ← coin p₂ hp₂;
     return (X ∧ Y)
   ) = coin (p₁ * p₂) (Left.mul_le_one hp₁ hp₂) := by
   simp only [Bool.decide_and, Bool.decide_eq_true, do_bind]
-  exact two_coins p₁ p₂ hp₁ hp₂
+  exact two_coins_and p₁ p₂ hp₁ hp₂
+
+lemma two_coins :
+  (do
+    let X ← coin p₁ hp₁;
+    let Y ← coin p₂ hp₂;
+    return (X, Y)
+  ) = coin (p₁ * p₂) (Left.mul_le_one hp₁ hp₂) := by
+  simp only [Bool.decide_and, Bool.decide_eq_true, do_bind]
+  exact two_coins_and p₁ p₂ hp₁ hp₂
 
 end one_coin
 
@@ -105,8 +114,22 @@ section n_coins
 
 variable {n : ℕ} (p : Fin n → ℝ≥0∞) (hp : ∀ i, p i ≤ 1)
 
+noncomputable def PMF.bernoulliChain : PMF (Fin n → Bool) := PMF.piFin n (fun i ↦ coin (p i) (hp i))
+
+
 noncomputable def bernoulli_chain : PMF (List Bool) :=
   sequence <| List.ofFn (fun (i : Fin n) ↦ (coin (p i) (hp i)))
+
+def bernoulli_chain' : PMF (List Bool) :=
+  | zero => δ []
+  | succ n hn => ((bernoulli_chain' p hp) >>= (fun (X : Bool) ↦ X.and <$> coin p₂ hp₂))
+
+  sequence <| List.ofFn (fun (i : Fin n) ↦ (coin (p i) (hp i)))
+
+
+
+lemma two_coins : ((coin p₁ hp₁) >>= (fun (X : Bool) ↦ X.and <$> coin p₂ hp₂)) = coin (p₁ * p₂) (Left.mul_le_one hp₁ hp₂) := by
+  sorry
 
 lemma eq_pure_iff {α : Type} (ℙ : PMF α) (a : α) : ℙ = δ a ↔ (ℙ a = 1) := by
   refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
