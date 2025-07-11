@@ -42,10 +42,10 @@ lemma PMF.pure_eq_pure (a : α) : PMF.pure a = (pure a : PMF α) := by rfl
 
 section Pi
 
-noncomputable def PMF.piFin : (n : ℕ) → (Fin n → PMF α) → PMF (Fin n → α)
+noncomputable def PMF.piFin : {n : ℕ} → (Fin n → PMF α) → PMF (Fin n → α)
 | 0,     _ => PMF.pure (fun x => nomatch x)  -- es gibt kein x : Fin 0
 | n + 1, ℙ => do
-  let X₀ ← PMF.piFin n (fun i => ℙ i.castSucc)
+  let X₀ ← PMF.piFin (fun i => ℙ i.castSucc)
   let X' ← ℙ ⟨n, lt_add_one n⟩
   return (fun i => dite (i < n) (fun h ↦ X₀ ⟨i.val, h⟩) (fun _ ↦ X'))
 
@@ -54,7 +54,7 @@ noncomputable def PMF.pi {ι α : Type} [Fintype ι]
   do
     let n := Fintype.card ι
     let e : ι ≃ Fin n := Fintype.equivFin ι
-    let X ← PMF.piFin n (fun i => ℙ (e.symm i))
+    let X ← PMF.piFin (fun i => ℙ (e.symm i))
     return (fun i => X (e i))
 
 end Pi

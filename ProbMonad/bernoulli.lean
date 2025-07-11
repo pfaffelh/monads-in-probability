@@ -114,8 +114,22 @@ section n_coins
 
 variable {n : ℕ} (p : Fin n → ℝ≥0∞) (hp : ∀ i, p i ≤ 1)
 
-noncomputable def PMF.bernoulliChain : PMF (Fin n → Bool) := PMF.piFin n (fun i ↦ coin (p i) (hp i))
+noncomputable def PMF.bernoulliChain : PMF (Fin n → Bool) := PMF.piFin (fun i ↦ coin (p i) (hp i))
 
+theorem bernoulliChain_ext (x : Fin n → Bool): PMF.bernoulliChain p hp x = ∏ (i : Fin n), (p i) ^ (x i).toNat * (1 - p i) ^ (not (x i)).toNat := by
+  induction n with
+  | zero =>
+    simp only [PMF.bernoulliChain, PMF.piFin, Finset.univ_eq_empty, Finset.prod_empty]
+    simp at *
+    exact List.ofFn_inj.mp rfl
+  | succ n hn =>
+    simp only [PMF.bernoulliChain, PMF.piFin, do_bind] at hn ⊢
+
+
+
+    sorry
+
+  sorry
 
 noncomputable def bernoulli_chain : PMF (List Bool) :=
   sequence <| List.ofFn (fun (i : Fin n) ↦ (coin (p i) (hp i)))
